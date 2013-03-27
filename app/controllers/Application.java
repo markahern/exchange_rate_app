@@ -22,17 +22,26 @@ import static play.libs.Json.toJson;
 public class Application extends Controller {
 
     public static Result index() {
-        return ok(index.render("Hello"));
+        return ok(index.render());
     }
 
     public static Result getNinetyDaysExchangeRates() throws IOException, ParserConfigurationException, SAXException, ParseException {
+
+
+        //First get and parse the document
         URL exchangeRatesURL;
         exchangeRatesURL = new URL("http://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml");
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(exchangeRatesURL.openStream());
 
+
+        /*Each currencies 90 day data is in a sorted map with the date as the key
+        Each of these maps is to be put in another map with the currency as the key.*/
         Map<String, SortedMap> euroExchangeNinetyDays = new TreeMap<String, SortedMap>();
+
+
+        // Walk the dom and populate euroExchangeNinedays
         Node rootCube = doc.getElementsByTagName("Cube").item(0);
         NodeList ratesByDate = rootCube.getChildNodes();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -56,6 +65,8 @@ public class Application extends Controller {
                 euroExchangeNinetyDays.get(currency).put(day, rate);
             }
         }
+
+        //return it as json
         return ok(toJson(euroExchangeNinetyDays));
     }
 }
